@@ -1,0 +1,12 @@
+{
+  "name": "Dutch_Auction_ICO",
+  "version": "1.0.0",
+  "description": "Dutch Auction ICO smart contract",
+  "main": "index.js",
+  "author": "Christian Volckaert",
+  "license": "MIT",
+  "dependencies": {
+    "openzeppelin-solidity": "^2.3.0",
+    "truffle": "^5.0.26"
+  }
+}
