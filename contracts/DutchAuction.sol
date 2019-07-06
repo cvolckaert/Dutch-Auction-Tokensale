@@ -11,6 +11,7 @@ contract DutchAuction {
     uint max_bid_limit = 5 ether;
 
     ///Addresses
+    Token public token;
 
     // address public token;
     address public Token;
@@ -139,7 +140,7 @@ contract DutchAuction {
         //token = Dutchtoken(_token_address);
 
         //Tokens to sell
-        token_inventory = Token.balanceOf(address(this));
+        token_inventory = token.balanceOf(address(this));
 
         token_decimals = 10 ** uint(Token.decimals());
 
