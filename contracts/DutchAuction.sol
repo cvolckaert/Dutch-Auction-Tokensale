@@ -74,7 +74,8 @@ contract DutchAuction {
 
     event Deployed(
         uint indexed _price_ceiling,
-        uint indexed _price_floor
+        uint indexed _price_floor,
+        uint _auction_decay_time
     );
 
     event Config();
@@ -100,6 +101,14 @@ contract DutchAuction {
     event AllTokensClaimed();
 
     /// Put in Constructor Here
+    constructor(address _wallet, uint _price_ceiling, uint _price_floor, uint _auction_decay_time) public {
+        require(_wallet != 0x0);
+        wallet = _wallet;
+        owner = msg.sender;
+        stage = Stages.AuctionDeployed;
+        config(_price_ceiling, _price_floor, _auction_decay_time);
+        Deployed(_price_ceiling, _price_floor,_auction_decay_time);
+    }
 
     // Fallback Function
     function () payable atStage(Stages.AuctionStarted) {
@@ -136,7 +145,7 @@ contract DutchAuction {
         stage = Stages.AuctionStarted;
         start_time = now;
         start_block = block.number;
-        AuctionStarted(start_time, start_block);
+        AuctionStarted(start_time, start_block, auction_decay_time);
     }
 
 
