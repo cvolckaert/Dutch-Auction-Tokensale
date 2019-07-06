@@ -40,8 +40,14 @@ contract DutchAuction {
     // starting time 
     uint public start_time;
 
+    //Ending time
+    uint public end_time;
+
     // starting block
     uint public start_block;
+
+    // final block
+    uint public final_block;
 
     // Tokens to sell
     uint public token_inventory;
@@ -95,7 +101,9 @@ contract DutchAuction {
     event TokenReceived();
 
     // Finalized?
-    event AuctionEnded();
+    event AuctionEnded(
+        uint _
+    );
 
     // In finalized?
     event AllTokensClaimed();
@@ -149,7 +157,18 @@ contract DutchAuction {
     }
 
 
-    // Finalize Auction Function Here
+    function endAuction() public atStage(Stages.AuctionStarted) {
+
+        uint remaining_wei = remainingTokens();
+        require(remaining_wei == 0);
+
+        final_price = token_decimals * wei_amount / token_inventory;
+
+        end_time = now;
+        final_block = block.number;
+        stage = Stages.AuctionEnded;
+        AuctionEnded(final_price, end_time, final_block);
+    }
 
     function bid()
         public 
@@ -237,7 +256,7 @@ contract DutchAuction {
             auction_time = now - start_time;
         }
         if (now - start_time < auction_decay_time){
-            return price_ceiling -(auction_time / auction_decay_time)*(price_factor);
+            return price_ceiling - (auction_time / auction_decay_time)*(price_factor);
         }
         else {
             return price_floor;
