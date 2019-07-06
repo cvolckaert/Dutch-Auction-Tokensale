@@ -13,6 +13,7 @@ contract DutchAuction {
     ///Addresses
 
     // address public token;
+    address public Token;
 
     // Amount of wei raised by auction
     uint wei_amount;
@@ -34,6 +35,9 @@ contract DutchAuction {
     // lowest price possible 
     uint public price_floor;
 
+    // final price of auction
+    uint public final_price;
+
     // length of auction price decay
     uint public auction_decay_time;
 
@@ -43,6 +47,9 @@ contract DutchAuction {
     //Ending time
     uint public end_time;
 
+    //Price of token at current auction price
+    uint public require_wei_at_current_price;
+
     // starting block
     uint public start_block;
 
@@ -51,6 +58,10 @@ contract DutchAuction {
 
     // Tokens to sell
     uint public token_inventory;
+
+    uint public claimed_ether;
+
+    Stages public stage;
 
     ///Mapping a bidders' wallet address to their bid
     mapping (address => uint) public bids_list;
@@ -110,27 +121,27 @@ contract DutchAuction {
 
     /// Put in Constructor Here
     constructor(address _wallet, uint _price_ceiling, uint _price_floor, uint _auction_decay_time) public {
-        require(_wallet != 0x0);
+        require(_wallet != address(0x0));
         wallet = _wallet;
         owner = msg.sender;
         stage = Stages.AuctionDeployed;
-        config(_price_ceiling, _price_floor, _auction_decay_time);
-        Deployed(_price_ceiling, _price_floor,_auction_decay_time);
+        changeConfig(_price_ceiling, _price_floor, _auction_decay_time);
+        emit Deployed(_price_ceiling, _price_floor,_auction_decay_time);
     }
 
     // Fallback Function
-    function () payable atStage(Stages.AuctionStarted) {
-        //bid();
+    function () external payable atStage(Stages.AuctionStarted) {
+        bid();
     }
 
     function config(address _token_address) public isOwner atStage(Stages.AuctionDeployed) {
-        require(_token_address != 0x0);
+        require(_token_address != address(0x0));
         //token = Dutchtoken(_token_address);
 
         //Tokens to sell
-        token_inventory = token.balanceOf(address(this));
+        token_inventory = Token.balanceOf(address(this));
 
-        token_decimals = 10 ** uint(token.decimals());
+        token_decimals = 10 ** uint(Token.decimals());
 
         stage = Stages.AuctionConfig;
         Config();
@@ -138,7 +149,8 @@ contract DutchAuction {
 
     function changeConfig(
         uint _price_ceiling,
-        uint _price_floor)
+        uint _price_floor,
+        uint _auction_decay_time)
         internal
     {
         require(stage = Stages.AuctionDeployed || stage = Stages.AuctionConfig);
@@ -208,7 +220,7 @@ contract DutchAuction {
 
         uint amount = (token_decimals * bids_list[receiver_address]) / final_price;
 
-        uint auction_token_balance = token.balanceOf(address(this));
+        uint auction_token_balance = Token.balanceOf(address(this));
         if (amount > auction_token_balance) {
             amount = auction_token_balance;
         }
@@ -217,7 +229,7 @@ contract DutchAuction {
 
         bids_list[receiver_address] = 0;
 
-        require(token.transfer(receiver_address, amount));
+        require(Token.transfer(receiver_address, amount));
 
         TokenReceived(receiver_address, amount);
 
