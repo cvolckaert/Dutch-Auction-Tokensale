@@ -208,7 +208,7 @@ contract DutchAuction {
         }
     }
 
-    function price() public constant returns (uint) {
+    function price() public view returns (uint) {
         if (stage == Stages.AuctionEnded ||
             stage == Stages.TokensClaimed) {
             return 0;
@@ -216,7 +216,7 @@ contract DutchAuction {
         return tokenPrice();
     }
 
-    function remainingTokens() constant public returns (uint) {
+    function remainingTokens() view public returns (uint) {
 
         uint required_wei_at_current_price = token_inventory * price() / token_decimals;
         if (required_wei_at_current_price <= wei_amount) {
@@ -229,7 +229,7 @@ contract DutchAuction {
     }
 
     /* Private Function */
-    function tokenPrice() constant private returns(uint){
+    function tokenPrice() view private returns(uint){
         uint auction_time;
         uint price_factor = price_ceiling - price_floor;
 
