@@ -199,11 +199,25 @@ contract DutchAuction {
         }
     }
 
+    function price() public constant returns (uint) {
+        if (stage == Stages.AuctionEnded ||
+            stage == Stages.TokensClaimed) {
+            return 0;
+        }
+        return tokenPrice();
+    }
 
+    function remainingTokens() constant public returns (uint) {
 
+        uint required_wei_at_current_price = token_inventory * price() / token_decimals;
+        if (required_wei_at_current_price <= wei_amount) {
+            return 0;
+        }
 
-
-    function remainingTokens();
+        // why is this commented out?
+        // assert(required_wei_at_current_price - wei_amount > 0)
+        return require_wei_at_current_price - wei_amount;
+    }
 
     /* Private Function */
     function tokenPrice() constant private returns(uint){
@@ -213,12 +227,10 @@ contract DutchAuction {
         if (stage == AuctionStarted){
             auction_time = now - start_time;
         }
-
         if (now - start_time < auction_decay_time){
             return price_ceiling -(auction_time / auction_decay_time)*(price_factor);
         }
-
-        if (now - start time >= auction_decay_time) {
+        else {
             return price_floor;
         }
     }
