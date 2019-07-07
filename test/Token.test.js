@@ -7,10 +7,9 @@ require('chai')
     .should();
 
 contract('Token', accounts => {
-    const _name = "DutchToken";
-    const _symbol = 'DTKN';
+    const _name = "Token";
+    const _symbol = 'TKN';
     const _decimals = 18;
-});
 
 beforeEach(async function () {
     this.token = await Token.new(_name, _symbol, _decimals);
@@ -21,4 +20,5 @@ describe('Token has correct constructor arguements', function() {
         const name = await this.token.name();
         name.should.equal(_name);
     });
+});
 });
