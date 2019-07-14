@@ -10,9 +10,10 @@ contract('Token', accounts => {
     const _name = "Token";
     const _symbol = 'TKN';
     const _decimals = 18;
+    const _totalSupply = 1000;
 
 beforeEach(async function () {
-    this.token = await Token.new(_name, _symbol, _decimals);
+    this.token = await Token.new(_name, _symbol, _decimals,_totalSupply);
 });
 
 describe('Token has correct constructor arguements', function() {
