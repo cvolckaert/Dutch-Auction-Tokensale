@@ -11,9 +11,13 @@
     "bn.js": "^5.0.0",
     "chai": "^4.2.0",
     "chai-bignumber": "^3.0.0",
+    "create-react-app": "^3.0.1",
     "ganache-cli": "^6.4.4",
     "mocha": "^6.1.4",
     "openzeppelin-solidity": "^2.3.0",
+    "react": "^16.8.6",
+    "react-dom": "^16.8.6",
+    "react-native": "^0.60.3",
     "truffle": "^5.0.26"
   }
 }

@@ -8,7 +8,7 @@ contract Token is ERC20,ERC20Detailed{
     ERC20Detailed(_name, _symbol, _decimals)
         public
         {
-            _mint(msg.sender,_totalSupply * 10**uint(_decimals));
+            _mint(msg.sender,_totalSupply);
 
         }
 
