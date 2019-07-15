@@ -1,10 +1,11 @@
-const BigNumber = web3.BigNumber;
+const BigNumber = web3.utils.BN;
+const bnChai = require('bn-chai');
+
+const chai = require('chai')
+chai.should()
+chai.use(bnChai(BigNumber));
 
 const Token = artifacts.require('./Token.sol');
-
-require('chai')
-    .use(require('chai-bignumber')(BigNumber))
-    .should();
 
 contract('Token', accounts => {
     const _name = "Token";
@@ -20,6 +21,21 @@ describe('Token has correct constructor arguements', function() {
     it('Has correct token name', async function() {
         const name = await this.token.name();
         name.should.equal(_name);
+    });
+
+    it('Has correct token symbol', async function() {
+        const symbol = await this.token.symbol()
+        symbol.should.equal(_symbol)
+    });
+
+    it('Has correct token decimals', async function() {
+        const decimals = await this.token.decimals()
+        decimals.should.be.eq.BN(_decimals)
+    });
+
+    it('Has correct token total supply', async function() {
+        const tokenSupply = await this.token.totalSupply()
+        tokenSupply.should.be.eq.BN(_totalSupply);
     });
 });
 });
