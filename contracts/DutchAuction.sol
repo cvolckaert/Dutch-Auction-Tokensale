@@ -12,52 +12,29 @@ contract DutchAuction {
 
     ///Addresses
     Token public token;
-
-    // Amount of wei raised by auction
-    uint wei_amount;
-
-    // Decimals of Token
     uint public token_decimals;
-
-    // address of the contract owner
-    address public owner;
-
-    // address of recipient of ICO funds
-    address payable public wallet;
-
-    /// Auction Parameters
-
-    // starting price
-    uint public price_ceiling;
-
-    // lowest price possible 
-    uint public price_floor;
-
-    // final price of auction
-    uint public final_price;
-
-    // length of auction price decay
-    uint public auction_decay_time;
-
-    // starting time 
-    uint public start_time;
-
-    //Ending time
-    uint public end_time;
-
-    //Price of token at current auction price
-    uint public require_wei_at_current_price;
-
-    // starting block
-    uint public start_block;
-
-    // final block
-    uint public final_block;
-
-    // Tokens to sell
     uint public token_inventory;
 
     uint public claimed_ether;
+    uint public max_bid_limit = 5 ether;
+    uint wei_amount;
+
+    // Addresses
+    address public owner;
+    address payable public wallet;
+
+    /// Price Parameters
+    uint public price_ceiling;
+    uint public price_floor;
+    uint public final_price;
+    uint public require_wei_at_current_price;
+
+    // Auction Time Parameters
+    uint public auction_decay_time;
+    uint public start_time;
+    uint public end_time;
+    uint public start_block;
+    uint public final_block;
 
     Stages public stage;
 
@@ -79,7 +56,6 @@ contract DutchAuction {
         _;
     }
 
-    // Import onlyOwner from OpenZeppelin?
     modifier isOwner() {
         require(msg.sender == owner);
         _;
@@ -108,16 +84,16 @@ contract DutchAuction {
         uint _remaining_tokens
     );
 
-    // Edit here later 
+    // Edit here later
     event TokenReceived(
-        address payable receiver_address, 
+        address payable receiver_address,
         uint amount
     );
 
     // Finalized?
     event AuctionEnded(
-       uint final_price, 
-       uint end_time, 
+       uint final_price,
+       uint end_time,
        uint final_block
     );
 
@@ -152,12 +128,13 @@ contract DutchAuction {
         emit Config();
     }
 
+    // Add function body
     function changeConfig(
         uint _price_ceiling,
         uint _price_floor,
         uint _auction_decay_time)
-        atStage(Stages.AuctionDeployed)
         internal
+        atStage(Stages.AuctionDeployed)
     {
         require(_price_ceiling > 0);
         require(_price_floor > 0);
@@ -166,7 +143,7 @@ contract DutchAuction {
         price_ceiling = _price_ceiling;
         price_floor = _price_floor;
         auction_decay_time = _auction_decay_time;
-    }    
+    }
 
     function startAuction() public isOwner atStage(Stages.AuctionConfig) {
         stage = Stages.AuctionStarted;
@@ -190,7 +167,7 @@ contract DutchAuction {
     }
 
     function bid()
-        public 
+        public
         payable
         atStage(Stages.AuctionStarted)
     {
@@ -202,7 +179,7 @@ contract DutchAuction {
 
         require(msg.value < remaining_token_supply);
 
-        bids_list[msg.sender] +=msg.value;
+        bids_list[msg.sender] += msg.value;
         wei_amount += msg.value;
 
         wallet.transfer(msg.value);
@@ -210,10 +187,10 @@ contract DutchAuction {
         emit BidReceived(msg.sender, msg.value, remaining_token_supply);
 
         assert(wei_amount >= msg.value);
-    }    
+    }
 
     function proxytokenClaim(address payable receiver_address)
-    public 
+    public
     atStage(Stages.AuctionEnded)
     returns(bool)
     {
@@ -254,7 +231,7 @@ contract DutchAuction {
         return tokenPrice();
     }
 
-    function remainingTokens() view public returns (uint) {
+    function remainingTokens() public view returns (uint) {
 
         uint required_wei_at_current_price = token_inventory * price() / token_decimals;
         if (required_wei_at_current_price <= wei_amount) {
@@ -267,12 +244,12 @@ contract DutchAuction {
     }
 
     /* Private Function */
-    function tokenPrice() view private returns(uint){
+    function tokenPrice() private view returns(uint){
         uint auction_time;
         uint price_factor = price_ceiling - price_floor;
 
         if (stage == Stages.AuctionStarted){
-            auction_time = now - start_time;
+            auction_time = block.timestamp - start_time;
         }
         if (now - start_time < auction_decay_time){
             return price_ceiling - (auction_time / auction_decay_time)*(price_factor);
