@@ -7,7 +7,7 @@ chai.use(bnChai(BigNumber));
 
 const Token = artifacts.require('./Token.sol');
 
-contract('Token', accounts => {
+contract('Token', async() => {
     const _name = "Token";
     const _symbol = 'TKN';
     const _decimals = 18;

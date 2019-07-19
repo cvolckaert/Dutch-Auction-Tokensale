@@ -7,16 +7,14 @@ contract DutchAuction {
 
     /*Storage*/
 
-    // Per address bidding limit in ether
-    uint public max_bid_limit = 5 ether;
-
-    ///Addresses
+    ///Token Parameters
     Token public token;
-    uint public token_decimals;
-    uint public token_inventory;
+    uint public tokenDecimals;
+    uint public tokenInventory;
 
-    uint public claimed_ether;
-    uint public max_bid_limit = 5 ether;
+    ///Ether trackers
+    uint public claimedEther;
+    uint public maxBidLimit = 5 ether;
     uint wei_amount;
 
     // Addresses
@@ -24,22 +22,29 @@ contract DutchAuction {
     address payable public wallet;
 
     /// Price Parameters
-    uint public price_ceiling;
-    uint public price_floor;
-    uint public final_price;
-    uint public require_wei_at_current_price;
+    uint public priceCeiling;
+    uint public priceFloor;
+    uint public finalPrice;
+    uint public currentPriceInWei;
 
-    // Auction Time Parameters
-    uint public auction_decay_time;
-    uint public start_time;
-    uint public end_time;
-    uint public start_block;
-    uint public final_block;
+    /// Auction Time Parameters
+    uint public auctionDecayTime;
+    uint public startTime;
+    uint public endTime;
+    uint public startBlock;
+    uint public finalBlock;
 
+    /// Stage Enum
     Stages public stage;
 
     ///Mapping a bidders' wallet address to their bid
     mapping (address => uint) public bids_list;
+
+    address[] public bidders;
+
+    // Stages enum
+
+    Stages public stage;
 
     enum Stages {
         AuctionDeployed,
@@ -64,9 +69,9 @@ contract DutchAuction {
     /* Events */
 
     event Deployed(
-        uint indexed _price_ceiling,
-        uint indexed _price_floor,
-        uint _auction_decay_time
+        uint indexed _priceCeiling,
+        uint indexed _priceFloor,
+        uint _auctionDecayTime
     );
 
     event Config();
@@ -90,14 +95,12 @@ contract DutchAuction {
         uint amount
     );
 
-    // Finalized?
     event AuctionEnded(
        uint final_price,
        uint end_time,
        uint final_block
     );
 
-    // In finalized?
     event AllTokensClaimed();
 
     /// Put in Constructor Here
@@ -115,34 +118,34 @@ contract DutchAuction {
         bid();
     }
 
-    function config(address _token_address) public isOwner atStage(Stages.AuctionDeployed) {
-        require(_token_address != address(0x0));
-        //token = Dutchtoken(_token_address);
+    function config(address _tokenAddress) public isOwner atStage(Stages.AuctionDeployed) {
+        require(_tokenAddress != address(0x0));
+
+        token = Dutchtoken(_tokenAddress);
 
         //Tokens to sell
-        token_inventory = token.balanceOf(address(this));
+        tokenInventory = token.balanceOf(address(this));
 
-        token_decimals = 10 ** uint(token.decimals());
+        tokenDecimals = 10 ** uint(token.decimals());
 
         stage = Stages.AuctionConfig;
         emit Config();
     }
 
-    // Add function body
     function changeConfig(
-        uint _price_ceiling,
-        uint _price_floor,
-        uint _auction_decay_time)
+        uint _priceCeiling,
+        uint _priceFloor,
+        uint _auctionDecayTime)
         internal
         atStage(Stages.AuctionDeployed)
     {
-        require(_price_ceiling > 0);
-        require(_price_floor > 0);
-        require(_auction_decay_time > 0);
+        require(_priceCeiling > 0);
+        require(_priceFloor > 0);
+        require(_auctionDecayTime > 0);
 
-        price_ceiling = _price_ceiling;
-        price_floor = _price_floor;
-        auction_decay_time = _auction_decay_time;
+        priceCeiling = _priceCeiling;
+        priceFloor = _priceFloor;
+        auctionDecayTime = _auctionDecayTime;
     }
 
     function startAuction() public isOwner atStage(Stages.AuctionConfig) {
@@ -158,7 +161,7 @@ contract DutchAuction {
         uint remaining_wei = remainingTokens();
         require(remaining_wei == 0);
 
-        final_price = token_decimals * wei_amount / token_inventory;
+        final_price = tokenDecimals *weiAmount / tokenInventory;
 
         end_time = now;
         final_block = block.number;
@@ -180,22 +183,33 @@ contract DutchAuction {
         require(msg.value < remaining_token_supply);
 
         bids_list[msg.sender] += msg.value;
-        wei_amount += msg.value;
+        //Push bidder to bidders array
+        //bidders.push(msg.sender);
+        weiAmount += msg.value;
 
         wallet.transfer(msg.value);
 
         emit BidReceived(msg.sender, msg.value, remaining_token_supply);
 
-        assert(wei_amount >= msg.value);
+        assert(weiAmount >= msg.value);
     }
 
-    function proxytokenClaim(address payable receiver_address)
+    //distribution function
+    function distribute(address[] bidders) private {
+        for(uint i = 0;i<bidders.length;i++ ){
+            if (bids_list[bidders[i]] > 0) {
+                tokenClaim(bidders[i]);
+            }
+        }
+    }
+
+
+
+    function tokenClaim(address payable receiver_address)
     public
     atStage(Stages.AuctionEnded)
     returns(bool)
     {
-        // Put in waiting time?
-
         require(receiver_address != address(0x0));
 
         if (bids_list[receiver_address] == 0) {
@@ -233,14 +247,14 @@ contract DutchAuction {
 
     function remainingTokens() public view returns (uint) {
 
-        uint required_wei_at_current_price = token_inventory * price() / token_decimals;
-        if (required_wei_at_current_price <= wei_amount) {
+        uint currentPriceInWei = token_inventory * price() / token_decimals;
+        if (CurrentPriceInWei <= wei_amount) {
             return 0;
         }
 
         // why is this commented out?
         // assert(required_wei_at_current_price - wei_amount > 0)
-        return require_wei_at_current_price - wei_amount;
+        return CurrentPriceInWei - wei_amount;
     }
 
     /* Private Function */
